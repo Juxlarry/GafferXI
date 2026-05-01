@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@layer base {
+  .markdown-body h1 { @apply text-2xl font-black uppercase italic tracking-tighter mb-4 text-emerald-400; }
+  .markdown-body h2 { @apply text-xl font-black uppercase italic tracking-tighter mb-3 mt-6 text-emerald-400; }
+  .markdown-body h3 { @apply text-lg font-black uppercase italic tracking-tighter mb-2 mt-4 text-emerald-400; }
+  .markdown-body p { @apply text-sm text-zinc-300 leading-relaxed mb-4; }
+  .markdown-body ul { @apply list-disc pl-5 mb-4 space-y-2; }
+  .markdown-body li { @apply text-sm text-zinc-300; }
+  .markdown-body strong { @apply text-emerald-400 font-bold; }
+}
