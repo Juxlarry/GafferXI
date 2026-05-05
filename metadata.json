@@ -1,5 +1,6 @@
 {
-  "name": "StaffCall - World Cup 2026 Squad Builder",
+  "name": "GafferXI - World Cup 2026 Squad Builder",
   "description": "An animated gamified platform for building Football squads for the upcoming World Cup 2026 with 3D pitch visualization.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": []
 }
