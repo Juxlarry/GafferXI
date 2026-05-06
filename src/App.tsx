@@ -22,7 +22,6 @@ import {
   Download,
   X
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { GHANA_PLAYERS, FORMATIONS } from './constants';
 import { Player, Formation, Squad, FormationPosition } from './types';
@@ -100,8 +99,6 @@ export default function App() {
   const generateScoutReport = async () => {
     setIsAnalyzing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
       const startingXI: Player[] = [];
       selectedFormation.positions.forEach(pos => {
         if (squad[pos.id]?.[0]) {
@@ -110,26 +107,21 @@ export default function App() {
       });
 
       const squadData = startingXI.map(p => `${p.name} (${p.position}, Club: ${p.club})`).join(', ');
-      const prompt = `Analyze this football squad for the 2026 World Cup.
-      Formation: ${selectedFormation.name}
-      Starting XI: ${squadData}
-      Team Rating: ${teamStats.rating}
-      Team Chemistry: ${teamStats.chemistry}
-      
-      Provide a concise 'Scout Report' in Markdown format with:
-      1. Tactical Overview (1-2 sentences)
-      2. Key Strength
-      3. Main Weakness
-      4. Recommendation
-      
-      Keep it professional and encouraging.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          squadData,
+          formationName: selectedFormation.name,
+          rating: teamStats.rating,
+          chemistry: teamStats.chemistry,
+        }),
       });
 
-      setScoutReport(response.text || "Unable to generate report.");
+      if (!response.ok) throw new Error('Analysis failed');
+      const data = await response.json();
+      setScoutReport(data.text || 'Unable to generate report.');
     } catch (error) {
       console.error("Scout Report Error:", error);
       setScoutReport("Error generating report. Please check your connection.");
