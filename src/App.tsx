@@ -24,10 +24,44 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GHANA_PLAYERS, FORMATIONS } from './constants';
-import { Player, Formation, Squad, FormationPosition } from './types';
+import { Player, Formation, Squad, FormationPosition, Position } from './types';
 import Pitch from './components/Pitch';
 import PlayerJersey from './components/PlayerJersey';
 import { formatPlayerName } from './utils/player';
+
+const MIDFIELD: Position[] = ['CDM', 'CM', 'CAM'];
+const ATTACK: Position[]   = ['LW', 'RW', 'ST', 'CF'];
+const DEFENSE: Position[]  = ['CB', 'LB', 'RB', 'LWB', 'RWB'];
+const WIDE_MID: Position[] = ['LM', 'RM'];
+
+function getPositionPriority(playerPos: Position, slotPos: Position): number {
+  if (playerPos === slotPos) return 0;
+
+  if (MIDFIELD.includes(slotPos)) {
+    if (MIDFIELD.includes(playerPos)) return 1;
+    return 2;
+  }
+  if (ATTACK.includes(slotPos)) {
+    if (ATTACK.includes(playerPos) || playerPos === 'CAM') return 1;
+    return 2;
+  }
+  if (WIDE_MID.includes(slotPos)) {
+    if (WIDE_MID.includes(playerPos) || ATTACK.includes(playerPos) || MIDFIELD.includes(playerPos)) return 1;
+    return 2;
+  }
+  if (DEFENSE.includes(slotPos)) {
+    if (DEFENSE.includes(playerPos)) return 1;
+    return 2;
+  }
+  return 2;
+}
+
+const POSITION_GROUPS: { label: string; positions: Position[] }[] = [
+  { label: 'Goalkeeper', positions: ['GK'] },
+  { label: 'Defender',   positions: ['CB', 'LB', 'RB'] },
+  { label: 'Midfielder', positions: ['CM', 'CAM', 'CDM'] },
+  { label: 'Attacker',   positions: ['ST', 'LW', 'RW', 'CF'] },
+];
 
 export default function App() {
   const [selectedCountry, setSelectedCountry] = useState('Ghana');
@@ -40,6 +74,10 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [showAllFormations, setShowAllFormations] = useState(false);
+  const [customPlayers, setCustomPlayers] = useState<Player[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newPlayerPos, setNewPlayerPos] = useState<Position | ''>('');
+  const [newPlayerClub, setNewPlayerClub] = useState('');
 
   // Stats calculation
   const squadSize = useMemo(() => Object.values(squad).flat().length, [squad]);
@@ -171,21 +209,25 @@ export default function App() {
   };
 
   // Filtered players for selection
+  const allPlayers = useMemo(() => [...GHANA_PLAYERS, ...customPlayers], [customPlayers]);
+
   const filteredPlayers = useMemo(() => {
     if (!activePosition) return [];
-    return GHANA_PLAYERS.filter(p => {
+    return allPlayers.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
       const isAlreadyInSquad = (Object.values(squad).flat() as Player[]).some(sp => sp.id === p.id);
       return matchesSearch && !isAlreadyInSquad;
-    }).sort((a, b) => {
-      // Sort natural positions to the top
-      const aIsNatural = a.position === activePosition.type;
-      const bIsNatural = b.position === activePosition.type;
-      if (aIsNatural && !bIsNatural) return -1;
-      if (!aIsNatural && bIsNatural) return 1;
-      return 0;
-    });
-  }, [activePosition, searchQuery, squad]);
+    }).sort((a, b) =>
+      getPositionPriority(a.position, activePosition.type) -
+      getPositionPriority(b.position, activePosition.type)
+    );
+  }, [activePosition, searchQuery, squad, allPlayers]);
+
+  const noMatchFound = useMemo(() => {
+    if (!searchQuery) return false;
+    if (activePosition) return filteredPlayers.length === 0;
+    return allPlayers.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0;
+  }, [searchQuery, activePosition, filteredPlayers, allPlayers]);
 
   const handleAddPlayer = (player: Player) => {
     if (!activePosition) return;
@@ -214,6 +256,67 @@ export default function App() {
     if (selectedPlayer?.id === playerId) setSelectedPlayer(null);
   };
 
+  const handleAddCustomPlayer = () => {
+    if (!newPlayerPos || !searchQuery.trim()) return;
+
+    const newPlayer: Player = {
+      id: `custom-${Date.now()}`,
+      name: searchQuery.trim(),
+      position: newPlayerPos,
+      club: newPlayerClub.trim() || 'Unknown Club',
+      league: 'Custom',
+      age: 25,
+      image: `https://ui-avatars.com/api/?name=${encodeURIComponent(searchQuery.trim())}&background=10b981&color=fff`,
+      stats: { pace: 60, shooting: 60, passing: 60, dribbling: 60, defending: 60, physical: 60 },
+    };
+
+    setCustomPlayers(prev => [...prev, newPlayer]);
+
+    if (activePosition) {
+      setSquad(prev => ({
+        ...prev,
+        [activePosition.id]: [...(prev[activePosition.id] || []), newPlayer],
+      }));
+      setActivePosition(null);
+    } else {
+      const matchingPos = selectedFormation.positions.find(pos => pos.type === newPlayerPos);
+      if (matchingPos && squadSize < 26 && !(newPlayerPos === 'GK' && gkCount >= 3)) {
+        setSquad(prev => ({
+          ...prev,
+          [matchingPos.id]: [...(prev[matchingPos.id] || []), newPlayer],
+        }));
+      }
+    }
+
+    setShowAddForm(false);
+    setNewPlayerPos('');
+    setNewPlayerClub('');
+    setSearchQuery('');
+  };
+
+  useEffect(() => {
+    if (!searchQuery) {
+      setShowAddForm(false);
+      setNewPlayerPos('');
+      setNewPlayerClub('');
+    }
+  }, [searchQuery]);
+
+  const handleDownload = async () => {
+    const element = document.getElementById('squad-card');
+    if (!element) return;
+    try {
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 2 });
+      const link = document.createElement('a');
+      link.download = 'ghana-wc-squad.png';
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Download failed:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30">
       {/* Header */}
@@ -223,7 +326,7 @@ export default function App() {
             <Trophy className="text-white w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">StaffCall</h1>
+            <h1 className="text-xl font-bold tracking-tight">Gaffer XI</h1>
             <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest">World Cup 2026</p>
           </div>
         </div>
@@ -379,20 +482,11 @@ export default function App() {
                   />
                 </div>
                 <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                  {activePosition && filteredPlayers.length === 0 && searchQuery && (
+                  {noMatchFound && !showAddForm && (
                     <button
                       onClick={() => {
-                        const newPlayer: Player = {
-                          id: `custom-${Date.now()}`,
-                          name: searchQuery,
-                          position: activePosition.type,
-                          club: 'Custom Entry',
-                          league: 'None',
-                          age: 25,
-                          image: `https://ui-avatars.com/api/?name=${encodeURIComponent(searchQuery)}&background=10b981&color=fff`,
-                          stats: { pace: 60, shooting: 60, passing: 60, dribbling: 60, defending: 60, physical: 60 }
-                        };
-                        handleAddPlayer(newPlayer);
+                        setShowAddForm(true);
+                        if (activePosition) setNewPlayerPos(activePosition.type);
                       }}
                       className="w-full flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-dashed border-emerald-500/50 hover:bg-emerald-500/20 transition-all group"
                     >
@@ -401,13 +495,70 @@ export default function App() {
                       </div>
                       <div className="flex-1 text-left">
                         <p className="text-sm font-bold text-emerald-400">Add "{searchQuery}"</p>
-                        <p className="text-[10px] text-zinc-500 font-medium tracking-wider uppercase">New {activePosition.label} Entry</p>
+                        <p className="text-[10px] text-zinc-500 font-medium tracking-wider uppercase">Not in pool — add player</p>
                       </div>
                       <Plus className="w-5 h-5 text-emerald-500" />
                     </button>
                   )}
 
-                  {(activePosition ? filteredPlayers : GHANA_PLAYERS.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))).map(p => {
+                  {showAddForm && searchQuery && (
+                    <div className="p-4 rounded-xl bg-zinc-800/60 border border-zinc-700 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Adding "{searchQuery}"</p>
+                        <button
+                          onClick={() => { setShowAddForm(false); setNewPlayerPos(''); setNewPlayerClub(''); }}
+                          className="text-zinc-500 hover:text-white transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {POSITION_GROUPS.map(group => (
+                          <div key={group.label}>
+                            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">{group.label}</p>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {group.positions.map(pos => (
+                                <button
+                                  key={pos}
+                                  onClick={() => setNewPlayerPos(pos)}
+                                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${
+                                    newPlayerPos === pos
+                                      ? 'bg-emerald-500 border-emerald-400 text-white shadow-md shadow-emerald-500/20'
+                                      : 'bg-zinc-700/50 border-zinc-600 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                                  }`}
+                                >
+                                  {pos}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <input
+                        type="text"
+                        placeholder="Club (e.g. Man City)"
+                        value={newPlayerClub}
+                        onChange={e => setNewPlayerClub(e.target.value)}
+                        className="w-full bg-zinc-700 border border-zinc-600 rounded-lg py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 placeholder-zinc-500 text-zinc-100"
+                      />
+
+                      <button
+                        onClick={handleAddCustomPlayer}
+                        disabled={!newPlayerPos}
+                        className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-tighter transition-all ${
+                          newPlayerPos
+                            ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20'
+                            : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Add to Squad
+                      </button>
+                    </div>
+                  )}
+
+                  {(activePosition ? filteredPlayers : allPlayers.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))).map(p => {
                     const isNatural = activePosition && p.position === activePosition.type;
                     const isAlreadyInSquad = (Object.values(squad).flat() as Player[]).some(sp => sp.id === p.id);
                     
@@ -719,11 +870,11 @@ export default function App() {
                   {/* Card Header */}
                   <div className="flex items-center justify-between mb-8 relative z-10">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white p-1 rounded-lg">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/FIFA_logo_without_slogan.svg" alt="FIFA" className="w-full h-full object-contain" />
+                      <div className="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                        <Trophy className="w-7 h-7 text-white" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-black text-white italic tracking-tighter leading-none">MY WORLD CUP SQUAD</h2>
+                        <h2 className="text-2xl font-black text-white italic tracking-tighter leading-none">BUILD THE STARS</h2>
                         <div className="flex items-center gap-2 mt-1">
                           <div className="w-5 h-3 bg-red-600 relative">
                              <div className="absolute inset-0 flex flex-col">
@@ -742,8 +893,9 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="flex-1 scale-95 origin-center">
-                    <Pitch 
+                  <div className="flex-1 min-h-0">
+                    <Pitch
+                      compact
                       formation={selectedFormation}
                       squad={squad}
                       onPositionClick={() => {}}
@@ -760,7 +912,7 @@ export default function App() {
                         <span className="text-[10px] font-bold">CHEM: {teamStats.chemistry}</span>
                       </div>
                     </div>
-                    <div className="text-[10px] font-black text-zinc-500 tracking-[0.3em]">STAFFCALL BUILDER</div>
+                    <div className="text-[10px] font-black text-zinc-500 tracking-[0.3em]">GAFFERXI SQUAD BUILDER</div>
                   </div>
                 </div>
 
@@ -825,8 +977,8 @@ export default function App() {
                         <ChevronLeft className="w-4 h-4" />
                         Back to Editor
                       </button>
-                      <button 
-                        onClick={() => window.print()}
+                      <button
+                        onClick={handleDownload}
                         className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-tighter text-sm shadow-xl shadow-emerald-500/20 transition-all"
                       >
                         <Download className="w-4 h-4" />

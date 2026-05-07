@@ -34,7 +34,7 @@ Provide a concise 'Scout Report' in Markdown format with:
 Keep it professional and encouraging.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 

@@ -11,24 +11,26 @@ interface PitchProps {
   onPositionClick: (position: FormationPosition) => void;
   onPlayerClick: (player: Player) => void;
   selectedPlayerId?: string;
+  compact?: boolean;
 }
 
-const Pitch: React.FC<PitchProps> = ({ 
-  formation, 
-  squad, 
-  onPositionClick, 
+const Pitch: React.FC<PitchProps> = ({
+  formation,
+  squad,
+  onPositionClick,
   onPlayerClick,
-  selectedPlayerId 
+  selectedPlayerId,
+  compact = false,
 }) => {
   return (
-    <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-zinc-950 p-8">
+    <div className={`relative w-full h-full flex items-center justify-center overflow-hidden ${compact ? '' : 'bg-zinc-950 p-8'}`}>
       {/* 3D Pitch Container */}
-      <div 
+      <div
         className="relative w-full max-w-xl aspect-[2/3] bg-emerald-600 rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden border-4 border-emerald-500/30"
-        style={{
+        style={compact ? undefined : {
           perspective: '1200px',
           transform: 'rotateX(20deg) scale(0.95)',
-          transformStyle: 'preserve-3d'
+          transformStyle: 'preserve-3d',
         }}
       >
         {/* Pitch Markings & Positions */}
