@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Search, ChevronRight, ChevronLeft, Users, Info, CheckCircle2, AlertCircle,
+  Search, ChevronRight, ChevronLeft, Users, Info, CheckCircle2,
   Trophy, Flag, Settings2, Plus, User, Zap, Star, BrainCircuit, Loader2,
-  Sparkles, Share2, Download, X, LayoutGrid,
+  Sparkles, Share2, Download, X, LayoutGrid, ChevronUp,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GHANA_PLAYERS, FORMATIONS } from './constants';
@@ -113,12 +113,16 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ squadData, formationName: selectedFormation.name, rating: teamStats.rating, chemistry: teamStats.chemistry }),
       });
-      if (!response.ok) throw new Error('Analysis failed');
       const data = await response.json();
+      if (!response.ok) {
+        const msg = data?.error ?? `HTTP ${response.status}`;
+        setScoutReport(`**Error:** ${msg}`);
+        return;
+      }
       setScoutReport(data.text || 'Unable to generate report.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Scout Report Error:', error);
-      setScoutReport('Error generating report. Please check your connection.');
+      setScoutReport(`**Network error:** ${error?.message ?? 'Could not reach server. Check your connection.'}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -129,16 +133,35 @@ export default function App() {
       const allPlrs = Object.values(prevSquad).flat();
       const newSquad: Squad = {};
       const placed = new Set<string>();
+
+      // Pass 1: exact position-type match
       newFormation.positions.forEach(pos => {
         const match = allPlrs.find(p => p.position === pos.type && !placed.has(p.id));
         if (match) { newSquad[pos.id] = [match]; placed.add(match.id); }
         else newSquad[pos.id] = [];
       });
-      allPlrs.filter(p => !placed.has(p.id)).forEach(p => {
-        const matchPos = newFormation.positions.find(pos => pos.type === p.position);
-        if (matchPos) newSquad[matchPos.id].push(p);
-        else newSquad[newFormation.positions[0].id].push(p);
+
+      // Pass 2: fill still-empty slots with closest positional fit from unplaced players
+      newFormation.positions.forEach(pos => {
+        if (newSquad[pos.id].length > 0) return;
+        const unplaced = allPlrs.filter(p => !placed.has(p.id));
+        if (unplaced.length === 0) return;
+        const best = [...unplaced].sort((a, b) =>
+          getPositionPriority(a.position, pos.type) - getPositionPriority(b.position, pos.type)
+        )[0];
+        newSquad[pos.id] = [best];
+        placed.add(best.id);
       });
+
+      // Pass 3: remaining unplaced players go as squad backups
+      allPlrs.filter(p => !placed.has(p.id)).forEach(p => {
+        const matchPos = newFormation.positions.find(pos => pos.type === p.position)
+          ?? [...newFormation.positions].sort((a, b) =>
+              getPositionPriority(p.position, a.type) - getPositionPriority(p.position, b.type)
+            )[0];
+        if (matchPos) newSquad[matchPos.id].push(p);
+      });
+
       return newSquad;
     });
     setSelectedFormation(newFormation);
@@ -175,6 +198,17 @@ export default function App() {
   const handleRemovePlayer = (positionId: string, playerId: string) => {
     setSquad(prev => ({ ...prev, [positionId]: prev[positionId].filter(p => p.id !== playerId) }));
     if (selectedPlayer?.id === playerId) setSelectedPlayer(null);
+  };
+
+  const handlePromotePlayer = (positionId: string, playerId: string) => {
+    setSquad(prev => {
+      const players = [...(prev[positionId] || [])];
+      const idx = players.findIndex(p => p.id === playerId);
+      if (idx <= 0) return prev;
+      const [player] = players.splice(idx, 1);
+      players.unshift(player);
+      return { ...prev, [positionId]: players };
+    });
   };
 
   const handleAddCustomPlayer = () => {
@@ -326,7 +360,7 @@ export default function App() {
   );
 
   // ─── Reusable: squad list ───────────────────────────────────────────────────
-  const SquadList = ({ onPlayerClick }: { onPlayerClick: (p: Player) => void }) => (
+  const SquadList = ({ onPlayerClick, isMobile = false }: { onPlayerClick: (p: Player) => void; isMobile?: boolean }) => (
     <div className="space-y-6">
       {selectedFormation.positions.map(pos => {
         const players = squad[pos.id] || [];
@@ -335,29 +369,45 @@ export default function App() {
             <div className="flex items-center justify-between px-1">
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{pos.label}</p>
               <button
-                onClick={() => setActivePosition(pos)}
+                onClick={() => { setActivePosition(pos); if (isMobile) setActiveTab('pitch'); }}
                 className="text-[10px] text-emerald-500 hover:text-emerald-400 font-bold uppercase flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Add
               </button>
             </div>
             <div className="space-y-1">
-              {players.map(p => (
+              {players.map((p, idx) => (
                 <div
                   key={p.id}
                   onClick={() => onPlayerClick(p)}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-800/30 border border-zinc-700/50 group cursor-pointer hover:bg-zinc-800 hover:border-zinc-600 transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8"><PlayerJersey player={p} size="sm" /></div>
-                    <span className="text-xs font-bold">{formatPlayerName(p.name)}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 flex-shrink-0"><PlayerJersey player={p} size="sm" /></div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold block truncate">{formatPlayerName(p.name)}</span>
+                      {idx === 0 && (
+                        <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Starter</span>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    onClick={e => { e.stopPropagation(); handleRemovePlayer(pos.id, p.id); }}
-                    className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition-all"
-                  >
-                    <AlertCircle className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {idx > 0 && (
+                      <button
+                        onClick={e => { e.stopPropagation(); handlePromotePlayer(pos.id, p.id); }}
+                        title="Set as starter"
+                        className="text-zinc-500 hover:text-emerald-400 active:text-emerald-400 transition-all p-1"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      onClick={e => { e.stopPropagation(); handleRemovePlayer(pos.id, p.id); }}
+                      className="text-zinc-500 hover:text-red-400 active:text-red-400 lg:opacity-0 lg:group-hover:opacity-100 transition-all p-1 -mr-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
               {players.length === 0 && (
@@ -719,7 +769,7 @@ export default function App() {
                         <Users className="w-4 h-4 text-emerald-500" />
                         <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">Full Squad List</h2>
                       </div>
-                      <SquadList onPlayerClick={setSelectedPlayer} />
+                      <SquadList onPlayerClick={setSelectedPlayer} isMobile />
                     </div>
                   </motion.div>
                 )}

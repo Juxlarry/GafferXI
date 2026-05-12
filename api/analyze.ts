@@ -39,8 +39,9 @@ Keep it professional and encouraging.`;
     });
 
     return res.status(200).json({ text: response.text ?? 'Unable to generate report.' });
-  } catch (error) {
-    console.error('Gemini error:', error);
-    return res.status(500).json({ error: 'Failed to generate report.' });
+  } catch (error: any) {
+    const detail = error?.message ?? String(error);
+    console.error('Gemini error:', detail);
+    return res.status(500).json({ error: `Gemini error: ${detail}` });
   }
 }
