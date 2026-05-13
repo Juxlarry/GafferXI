@@ -51,7 +51,7 @@ const Pitch: React.FC<PitchProps> = ({
             return (
               <motion.div
                 key={pos.id}
-                layoutId={pos.id}
+                layoutId={compact ? undefined : pos.id}
                 className="absolute flex flex-col items-center justify-center group"
                 style={{
                   left: `${pos.x}%`,
