@@ -934,7 +934,7 @@ export default function App() {
                       </div>
 
                       {/* Pitch */}
-                      <div style={{ height: 340 }}>
+                      <div style={{ aspectRatio: '2/3' }} className="w-full">
                         <Pitch
                           compact
                           formation={selectedFormation}

@@ -62,41 +62,43 @@ const Pitch: React.FC<PitchProps> = ({
                 transition={{ type: 'spring', damping: 15, stiffness: 100 }}
               >
                 {mainPlayer ? (
-                  <div 
+                  <div
                     onClick={() => onPlayerClick(mainPlayer)}
                     className="cursor-pointer relative"
                   >
-                    <PlayerJersey 
-                      player={mainPlayer} 
-                      size="lg"
+                    <PlayerJersey
+                      player={mainPlayer}
+                      size={compact ? 'sm' : 'lg'}
                       className={selectedPlayerId === mainPlayer.id ? 'scale-125 z-10' : ''}
                     />
-                    
+
                     {/* Hover "Add" overlay */}
-                    <div 
-                      className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPositionClick(pos);
-                      }}
-                    >
-                      <Plus className="w-6 h-6 text-white bg-emerald-500 rounded-full p-1" />
-                    </div>
+                    {!compact && (
+                      <div
+                        className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPositionClick(pos);
+                        }}
+                      >
+                        <Plus className="w-6 h-6 text-white bg-emerald-500 rounded-full p-1" />
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div 
-                    className="w-12 h-12 rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-all"
+                  <div
+                    className={`rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-all ${compact ? 'w-6 h-6' : 'w-12 h-12'}`}
                     onClick={() => onPositionClick(pos)}
                   >
-                    <Plus className="w-5 h-5 text-white/30" />
+                    <Plus className={`text-white/30 ${compact ? 'w-3 h-3' : 'w-5 h-5'}`} />
                   </div>
                 )}
-                
-                {/* Simplified Label */}
-                <div className="mt-1 flex flex-col items-center">
-                  <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">{pos.label}</span>
+
+                {/* Label */}
+                <div className="mt-0.5 flex flex-col items-center">
+                  <span className={`font-black text-white/40 uppercase tracking-widest ${compact ? 'text-[6px]' : 'text-[8px]'}`}>{pos.label}</span>
                   {mainPlayer && (
-                    <span className="text-[10px] font-black text-white uppercase bg-zinc-900/80 px-2 py-0.5 rounded border border-white/5 shadow-lg truncate max-w-[80px]">
+                    <span className={`font-black text-white uppercase bg-zinc-900/80 rounded border border-white/5 shadow-lg truncate ${compact ? 'text-[7px] px-1 py-px max-w-[48px]' : 'text-[10px] px-2 py-0.5 max-w-[80px]'}`}>
                       {mainPlayer.name.split(' ').pop()}
                     </span>
                   )}
@@ -104,7 +106,7 @@ const Pitch: React.FC<PitchProps> = ({
 
                 {/* Stack dot */}
                 {playersAtPos.length > 1 && (
-                  <div className="absolute top-0 -right-2 w-4 h-4 bg-emerald-500 text-[8px] font-black text-white rounded-full flex items-center justify-center border border-zinc-950 shadow-lg">
+                  <div className={`absolute top-0 -right-1 bg-emerald-500 font-black text-white rounded-full flex items-center justify-center border border-zinc-950 shadow-lg ${compact ? 'w-3 h-3 text-[6px]' : 'w-4 h-4 text-[8px] -right-2'}`}>
                     {playersAtPos.length}
                   </div>
                 )}
