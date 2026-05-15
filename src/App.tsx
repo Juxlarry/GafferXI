@@ -571,7 +571,7 @@ export default function App() {
     return (
       <Suspense fallback={
         <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-          <img src="/logo.svg" alt="GafferXI" className="h-40 w-auto opacity-80 animate-pulse" />
+          <img src="/logo.svg" alt="GafferXI" className="w-56 opacity-80 animate-pulse" />
         </div>
       }>
         <TacticalBoard onBack={() => setActiveTab('pitch')} />
