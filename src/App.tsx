@@ -63,6 +63,7 @@ export default function App() {
   const [newPlayerPos, setNewPlayerPos] = useState<Position | ''>('');
   const [newPlayerClub, setNewPlayerClub] = useState('');
   const [activeTab, setActiveTab] = useState<'pitch' | 'build' | 'squad' | 'tactical'>('pitch');
+  const [sharingCardId, setSharingCardId] = useState<string | null>(null);
 
   const squadSize = useMemo(() => Object.values(squad).flat().length, [squad]);
   const gkCount = useMemo(
@@ -257,6 +258,33 @@ export default function App() {
       link.click();
     } catch (err) {
       console.error('Download failed:', err);
+    }
+  };
+
+  const shareCard = async (id: string, text: string) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    setSharingCardId(id);
+    try {
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 2, backgroundColor: '#18181b' });
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'gafferxi-squad.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text, title: 'GafferXI — Own The Pitch' });
+      } else {
+        const link = document.createElement('a');
+        link.download = 'gafferxi-squad.png';
+        link.href = dataUrl;
+        link.click();
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Share failed', err);
+      }
+    } finally {
+      setSharingCardId(null);
     }
   };
 
@@ -979,13 +1007,23 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  {/* Download button — outside card div, not captured */}
-                  <button
-                    onClick={() => downloadCard('pitch-card', 'ghana-pitch-card.png')}
-                    className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-2xl font-black uppercase tracking-tighter text-sm shadow-lg shadow-emerald-500/20 transition-all"
-                  >
-                    <Download className="w-4 h-4" />Download Pitch Card
-                  </button>
+                  {/* Action buttons — outside card div, not captured */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => shareCard('pitch-card', '⚽ Check out my GafferXI squad! Build yours at gafferxi.vercel.app #GafferXI #FootballManager')}
+                      disabled={sharingCardId === 'pitch-card'}
+                      className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white py-3 rounded-2xl font-black uppercase tracking-tighter text-sm shadow-lg shadow-emerald-500/20 transition-all"
+                    >
+                      {sharingCardId === 'pitch-card' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                      Share
+                    </button>
+                    <button
+                      onClick={() => downloadCard('pitch-card', 'gafferxi-pitch-card.png')}
+                      className="flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-3 rounded-2xl font-black uppercase tracking-tighter text-sm transition-all"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* ── Squad Sheet ── */}
@@ -1060,13 +1098,23 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  {/* Download button — outside card div, not captured */}
-                  <button
-                    onClick={() => downloadCard('squad-sheet', 'ghana-squad-sheet.png')}
-                    className="w-full flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white py-3 rounded-2xl font-black uppercase tracking-tighter text-sm transition-all"
-                  >
-                    <Download className="w-4 h-4" />Download Squad Sheet
-                  </button>
+                  {/* Action buttons — outside card div, not captured */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => shareCard('squad-sheet', '⚽ Check out my GafferXI squad! Build yours at gafferxi.vercel.app #GafferXI #FootballManager')}
+                      disabled={sharingCardId === 'squad-sheet'}
+                      className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white py-3 rounded-2xl font-black uppercase tracking-tighter text-sm shadow-lg shadow-emerald-500/20 transition-all"
+                    >
+                      {sharingCardId === 'squad-sheet' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                      Share
+                    </button>
+                    <button
+                      onClick={() => downloadCard('squad-sheet', 'gafferxi-squad-sheet.png')}
+                      className="flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-3 rounded-2xl font-black uppercase tracking-tighter text-sm transition-all"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
               </div>
