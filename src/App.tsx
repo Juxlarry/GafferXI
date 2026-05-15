@@ -245,6 +245,17 @@ export default function App() {
     if (!searchQuery) { setShowAddForm(false); setNewPlayerPos(''); setNewPlayerClub(''); }
   }, [searchQuery]);
 
+  const downloadReport = () => {
+    if (!scoutReport) return;
+    const blob = new Blob([scoutReport], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `gafferxi-scout-report-${selectedCountry.toLowerCase()}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const downloadCard = async (id: string, filename: string) => {
     const element = document.getElementById(id);
     if (!element) return;
@@ -879,7 +890,7 @@ export default function App() {
                     </div>
                     <div>
                       <h2 className="text-xl lg:text-2xl font-black uppercase italic tracking-tighter">Scout Report</h2>
-                      <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">AI Tactical Analysis</p>
+                      <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Gaffer XI Tactical Analysis</p>
                     </div>
                   </div>
                   <button onClick={() => setScoutReport(null)} className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center hover:bg-zinc-700 transition-all">
@@ -889,7 +900,14 @@ export default function App() {
                 <div className="prose prose-invert prose-emerald max-w-none max-h-[55vh] overflow-y-auto pr-4 custom-scrollbar">
                   <div className="markdown-body"><ReactMarkdown>{scoutReport}</ReactMarkdown></div>
                 </div>
-                <div className="mt-6 pt-5 border-t border-zinc-800 flex justify-end">
+                <div className="mt-6 pt-5 border-t border-zinc-800 flex items-center justify-between gap-3">
+                  <button
+                    onClick={downloadReport}
+                    className="flex items-center gap-2 px-5 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-black uppercase tracking-tighter rounded-xl transition-all text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
                   <button onClick={() => setScoutReport(null)} className="px-8 py-3 bg-emerald-500 text-white font-black uppercase tracking-tighter rounded-xl hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20">
                     Dismiss Report
                   </button>
