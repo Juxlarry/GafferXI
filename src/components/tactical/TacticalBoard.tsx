@@ -48,6 +48,7 @@ function BoardInner({ onBack }: { onBack: () => void }) {
           className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-semibold flex-shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
+          <img src="/logo-mark.svg" alt="GafferXI" className="h-6 w-auto" />
           <span>Squad Builder</span>
         </button>
 

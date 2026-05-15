@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, ChevronRight, ChevronLeft, Users, Info, CheckCircle2,
-  Trophy, Flag, Settings2, Plus, User, Zap, Star, BrainCircuit, Loader2,
+  Flag, Settings2, Plus, User, Zap, Star, BrainCircuit, Loader2,
   Sparkles, Share2, Download, X, LayoutGrid, ChevronUp, Crosshair,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -569,7 +569,11 @@ export default function App() {
   // Full-screen tactical board bypasses the main layout entirely
   if (activeTab === 'tactical') {
     return (
-      <Suspense fallback={<div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400 text-sm">Loading Tactical Board…</div>}>
+      <Suspense fallback={
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+          <img src="/logo.svg" alt="GafferXI" className="h-40 w-auto opacity-80 animate-pulse" />
+        </div>
+      }>
         <TacticalBoard onBack={() => setActiveTab('pitch')} />
       </Suspense>
     );
@@ -580,10 +584,8 @@ export default function App() {
 
       {/* ── Header ── */}
       <header className="h-16 border-b border-zinc-800 flex items-center justify-between px-4 lg:px-6 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Trophy className="text-white w-6 h-6" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <img src="/logo-mark.svg" alt="GafferXI" className="h-9 w-auto flex-shrink-0" />
           <div>
             <h1 className="text-lg lg:text-xl font-bold tracking-tight">Gaffer XI</h1>
             <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest">World Cup 2026</p>
@@ -934,9 +936,7 @@ export default function App() {
                       {/* Card header */}
                       <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                            <Trophy className="w-6 h-6 text-white" />
-                          </div>
+                          <img src="/logo-mark.svg" alt="GafferXI" className="h-10 w-auto flex-shrink-0" />
                           <div>
                             <h2 className="text-xl font-black text-white italic tracking-tighter leading-none">BUILD THE STARS</h2>
                             <div className="flex items-center gap-2 mt-1">
@@ -1000,9 +1000,7 @@ export default function App() {
                       {/* Sheet header */}
                       <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/10">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-emerald-500 rounded-lg flex items-center justify-center">
-                            <Users className="w-5 h-5 text-white" />
-                          </div>
+                          <img src="/logo-mark.svg" alt="GafferXI" className="h-9 w-auto flex-shrink-0" />
                           <div>
                             <h2 className="text-base font-black text-white uppercase italic tracking-tighter leading-none">Ghana 2026</h2>
                             <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Full Squad · {allSquadPlayers.length} Players</p>
