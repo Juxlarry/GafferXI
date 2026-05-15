@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, ChevronRight, ChevronLeft, Users, Info, CheckCircle2,
   Trophy, Flag, Settings2, Plus, User, Zap, Star, BrainCircuit, Loader2,
-  Sparkles, Share2, Download, X, LayoutGrid, ChevronUp,
+  Sparkles, Share2, Download, X, LayoutGrid, ChevronUp, Crosshair,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { GHANA_PLAYERS, FORMATIONS } from './constants';
@@ -11,6 +11,8 @@ import { Player, Formation, Squad, FormationPosition, Position } from './types';
 import Pitch from './components/Pitch';
 import PlayerJersey from './components/PlayerJersey';
 import { formatPlayerName } from './utils/player';
+
+const TacticalBoard = lazy(() => import('./components/tactical/TacticalBoard'));
 
 const MIDFIELD: Position[] = ['CDM', 'CM', 'CAM'];
 const ATTACK: Position[]   = ['LW', 'RW', 'ST', 'CF'];
@@ -60,7 +62,7 @@ export default function App() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newPlayerPos, setNewPlayerPos] = useState<Position | ''>('');
   const [newPlayerClub, setNewPlayerClub] = useState('');
-  const [activeTab, setActiveTab] = useState<'pitch' | 'build' | 'squad'>('pitch');
+  const [activeTab, setActiveTab] = useState<'pitch' | 'build' | 'squad' | 'tactical'>('pitch');
 
   const squadSize = useMemo(() => Object.values(squad).flat().length, [squad]);
   const gkCount = useMemo(
@@ -563,6 +565,16 @@ export default function App() {
   const fwdPlayers  = allSquadPlayers.filter(p => ['ST', 'LW', 'RW', 'CF'].includes(p.position));
 
   // ─── RENDER ─────────────────────────────────────────────────────────────────
+
+  // Full-screen tactical board bypasses the main layout entirely
+  if (activeTab === 'tactical') {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400 text-sm">Loading Tactical Board…</div>}>
+        <TacticalBoard onBack={() => setActiveTab('pitch')} />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30">
 
@@ -585,6 +597,12 @@ export default function App() {
             className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-xl transition-all shadow-lg shadow-emerald-500/20 font-bold text-sm"
           >
             <Share2 className="w-4 h-4" />Share Squad
+          </button>
+          <button
+            onClick={() => setActiveTab('tactical')}
+            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white px-4 py-2 rounded-xl transition-all font-bold text-sm border border-zinc-700"
+          >
+            <Crosshair className="w-4 h-4" />Tactical Board
           </button>
           <div className="flex items-center gap-2 bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-700">
             <Flag className="w-4 h-4 text-zinc-400" /><span className="text-sm font-semibold">{selectedCountry}</span>
@@ -824,6 +842,7 @@ export default function App() {
           { tab: 'build' as const, icon: Settings2, label: 'Build' },
           { tab: 'pitch' as const, icon: LayoutGrid, label: 'Pitch' },
           { tab: 'squad' as const, icon: Users, label: 'Squad' },
+          { tab: 'tactical' as const, icon: Crosshair, label: 'Tactical' },
         ]).map(({ tab, icon: Icon, label }) => (
           <button
             key={tab}
