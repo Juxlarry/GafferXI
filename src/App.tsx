@@ -251,7 +251,7 @@ export default function App() {
     if (!element) return;
     try {
       const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 2, backgroundColor: '#18181b' });
+      const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 3, backgroundColor: '#18181b' });
       const link = document.createElement('a');
       link.download = filename;
       link.href = dataUrl;
@@ -267,7 +267,7 @@ export default function App() {
     setSharingCardId(id);
     try {
       const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 2, backgroundColor: '#18181b' });
+      const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 3, backgroundColor: '#18181b' });
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const file = new File([blob], 'gafferxi-squad.png', { type: 'image/png' });
@@ -983,7 +983,7 @@ export default function App() {
                       {/* Pitch */}
                       <div style={{ aspectRatio: '2/3' }} className="w-full">
                         <Pitch
-                          compact
+                          card
                           formation={selectedFormation}
                           squad={squad}
                           onPositionClick={() => {}}
@@ -1065,7 +1065,7 @@ export default function App() {
                           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             {players.map(p => (
                               <div key={p.id} className="flex items-center gap-2">
-                                <div className="w-7 h-7 flex-shrink-0"><PlayerJersey player={p} size="sm" /></div>
+                                <div className="w-8 h-8 flex-shrink-0"><PlayerJersey player={p} size="md" /></div>
                                 <div className="min-w-0">
                                   <p className="text-[11px] font-black text-white italic uppercase truncate leading-tight">{formatPlayerName(p.name)}</p>
                                   <p className="text-[9px] text-zinc-500 font-medium truncate">{p.club}</p>

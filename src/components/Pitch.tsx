@@ -12,6 +12,7 @@ interface PitchProps {
   onPlayerClick: (player: Player) => void;
   selectedPlayerId?: string;
   compact?: boolean;
+  card?: boolean;
 }
 
 const Pitch: React.FC<PitchProps> = ({
@@ -21,13 +22,28 @@ const Pitch: React.FC<PitchProps> = ({
   onPlayerClick,
   selectedPlayerId,
   compact = false,
+  card = false,
 }) => {
+  const flat = compact || card;
+  const jerseySize = card ? 'md' : compact ? 'sm' : 'lg';
+  const posLabelCls = card ? 'text-[8px]' : compact ? 'text-[6px]' : 'text-[8px]';
+  const namePillCls = card
+    ? 'text-[9px] px-1.5 py-0.5 max-w-[68px]'
+    : compact
+    ? 'text-[7px] px-1 py-px max-w-[48px]'
+    : 'text-[10px] px-2 py-0.5 max-w-[80px]';
+  const stackDotCls = (card || !compact)
+    ? 'w-4 h-4 text-[8px] -right-2'
+    : 'w-3 h-3 text-[6px]';
+  const emptySlotCls = card ? 'w-8 h-8' : compact ? 'w-6 h-6' : 'w-12 h-12';
+  const emptyIconCls = card ? 'w-4 h-4' : compact ? 'w-3 h-3' : 'w-5 h-5';
+
   return (
-    <div className={`relative w-full h-full flex items-center justify-center overflow-hidden ${compact ? '' : 'bg-zinc-950 p-8'}`}>
+    <div className={`relative w-full h-full flex items-center justify-center overflow-hidden ${flat ? '' : 'bg-zinc-950 p-8'}`}>
       {/* 3D Pitch Container */}
       <div
         className="relative w-full max-w-xl aspect-[2/3] bg-emerald-600 rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.5)] overflow-hidden border-4 border-emerald-500/30"
-        style={compact ? undefined : {
+        style={flat ? undefined : {
           perspective: '1200px',
           transform: 'rotateX(20deg) scale(0.95)',
           transformStyle: 'preserve-3d',
@@ -51,7 +67,7 @@ const Pitch: React.FC<PitchProps> = ({
             return (
               <motion.div
                 key={pos.id}
-                layoutId={compact ? undefined : pos.id}
+                layoutId={flat ? undefined : pos.id}
                 className="absolute flex flex-col items-center justify-center group"
                 style={{
                   left: `${pos.x}%`,
@@ -68,12 +84,12 @@ const Pitch: React.FC<PitchProps> = ({
                   >
                     <PlayerJersey
                       player={mainPlayer}
-                      size={compact ? 'sm' : 'lg'}
+                      size={jerseySize}
                       className={selectedPlayerId === mainPlayer.id ? 'scale-125 z-10' : ''}
                     />
 
-                    {/* Hover "Add" overlay */}
-                    {!compact && (
+                    {/* Hover "Add" overlay — interactive mode only */}
+                    {!flat && (
                       <div
                         className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                         onClick={(e) => {
@@ -87,18 +103,18 @@ const Pitch: React.FC<PitchProps> = ({
                   </div>
                 ) : (
                   <div
-                    className={`rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-all ${compact ? 'w-6 h-6' : 'w-12 h-12'}`}
+                    className={`rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-all ${emptySlotCls}`}
                     onClick={() => onPositionClick(pos)}
                   >
-                    <Plus className={`text-white/30 ${compact ? 'w-3 h-3' : 'w-5 h-5'}`} />
+                    <Plus className={`text-white/30 ${emptyIconCls}`} />
                   </div>
                 )}
 
                 {/* Label */}
                 <div className="mt-0.5 flex flex-col items-center">
-                  <span className={`font-black text-white/40 uppercase tracking-widest ${compact ? 'text-[6px]' : 'text-[8px]'}`}>{pos.label}</span>
+                  <span className={`font-black text-white/40 uppercase tracking-widest ${posLabelCls}`}>{pos.label}</span>
                   {mainPlayer && (
-                    <span className={`font-black text-white uppercase bg-zinc-900/80 rounded border border-white/5 shadow-lg truncate ${compact ? 'text-[7px] px-1 py-px max-w-[48px]' : 'text-[10px] px-2 py-0.5 max-w-[80px]'}`}>
+                    <span className={`font-black text-white uppercase bg-zinc-900/80 rounded border border-white/5 shadow-lg truncate ${namePillCls}`}>
                       {mainPlayer.name.split(' ').pop()}
                     </span>
                   )}
@@ -106,7 +122,7 @@ const Pitch: React.FC<PitchProps> = ({
 
                 {/* Stack dot */}
                 {playersAtPos.length > 1 && (
-                  <div className={`absolute top-0 -right-1 bg-emerald-500 font-black text-white rounded-full flex items-center justify-center border border-zinc-950 shadow-lg ${compact ? 'w-3 h-3 text-[6px]' : 'w-4 h-4 text-[8px] -right-2'}`}>
+                  <div className={`absolute top-0 -right-1 bg-emerald-500 font-black text-white rounded-full flex items-center justify-center border border-zinc-950 shadow-lg ${stackDotCls}`}>
                     {playersAtPos.length}
                   </div>
                 )}
