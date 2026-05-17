@@ -1010,7 +1010,7 @@ export default function App() {
                   {/* Action buttons — outside card div, not captured */}
                   <div className="flex gap-2">
                     <button
-                      onClick={() => shareCard('pitch-card', '⚽ Check out my GafferXI squad! Build yours at gaffer-xi.vercel.app #GafferXI #FootballManager')}
+                      onClick={() => shareCard('pitch-card', '⚽ Check out my GafferXI squad! Build yours at gafferxi.com #GafferXI #FootballManager')}
                       disabled={sharingCardId === 'pitch-card'}
                       className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white py-3 rounded-2xl font-black uppercase tracking-tighter text-sm shadow-lg shadow-emerald-500/20 transition-all"
                     >
@@ -1101,7 +1101,7 @@ export default function App() {
                   {/* Action buttons — outside card div, not captured */}
                   <div className="flex gap-2">
                     <button
-                      onClick={() => shareCard('squad-sheet', '⚽ Check out my GafferXI squad! Build yours at gaffer-xi.vercel.app #GafferXI #FootballManager')}
+                      onClick={() => shareCard('squad-sheet', '⚽ Check out my GafferXI squad! Build yours at gafferxi.com #GafferXI #FootballManager')}
                       disabled={sharingCardId === 'squad-sheet'}
                       className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white py-3 rounded-2xl font-black uppercase tracking-tighter text-sm shadow-lg shadow-emerald-500/20 transition-all"
                     >
