@@ -720,7 +720,7 @@ export default function App() {
                   <button onClick={() => setActivePosition(null)} className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold">Close</button>
                 )}
               </div>
-              <PlayerSearchList />
+              {PlayerSearchList()}
             </section>
           </div>
           <div className="p-6 border-t border-zinc-800 bg-zinc-900/80">
@@ -794,7 +794,7 @@ export default function App() {
                       <button onClick={() => setActivePosition(null)} className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold">Clear</button>
                     )}
                   </div>
-                  <PlayerSearchList />
+                  {PlayerSearchList()}
                 </section>
                 <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800">
                   <SquadStatus />
@@ -858,7 +858,7 @@ export default function App() {
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
-                  <PlayerSearchList />
+                  {PlayerSearchList()}
                 </div>
               </motion.div>
             </>
